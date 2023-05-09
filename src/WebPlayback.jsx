@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import ColorThief from 'colorthief';
+
 
 const track = {
     name: "",
@@ -18,6 +20,10 @@ function WebPlayback(props) {
     const [is_active, setActive] = useState(false);
     const [player, setPlayer] = useState(undefined);
     const [current_track, setTrack] = useState(track);
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [albumColors, setAlbumColors] = useState([]);
+
+    const coverImage = useRef(null);
 
     useEffect(() => {
 
@@ -65,6 +71,62 @@ function WebPlayback(props) {
         };
     }, []);
 
+    /*
+    useEffect(() => {
+        setIsLoaded(false);
+        if (coverImage.current.complete) {
+          setIsLoaded(true);
+        }
+    }, [current_track]);
+    */
+
+    const handleImageLoad = () => {
+        setIsLoaded(true);
+        console.log("Loaded")
+        if(current_track.album.images[0].url){
+            const colorThief = new ColorThief();
+            const img = coverImage.current;
+          
+            console.log(current_track.album.images[0].url);
+            if (img.complete) {
+                console.log(colorThief.getPalette(img));
+                document.body.style.backgroundColor = `rgb(${colorThief.getColor(img).join(',')})`;
+              } else {
+                image.addEventListener('load', function() {
+                    colorThief.getColor(img).then((color) => {
+                        console.log(colorThief.getPalette(img));
+                        document.body.style.backgroundColor = `rgb(${colorThief.getColor(img).join(',')})`;
+                    });
+                });
+              }
+        }
+    };
+
+    /*
+    useEffect(() => {
+        if(current_track.album.images[0].url){
+            const colorThief = new ColorThief();
+            const img = coverImage.current;
+          
+            console.log(current_track.album.images[0].url);
+            if (img.complete) {
+                colorThief.getColor(img);
+              } else {
+                image.addEventListener('load', function() {
+                  colorThief.getColor(img);
+                });
+              }
+        }
+      }, [current_track]);
+      */
+      
+
+      /*
+      useEffect(() => {
+        document.body.style.backgroundColor = `rgb(${albumColors.join(',')})`;
+      }, [albumColors]);
+      */
+
     if (!is_active) { 
         return (
             <>
@@ -80,7 +142,7 @@ function WebPlayback(props) {
                 <div className="container">
                     <div className="main-wrapper">
 
-                        <img src={current_track.album.images[0].url} className="now-playing__cover" alt="" />
+                        <img ref={coverImage} src={current_track.album.images[0].url} className="now-playing__cover" alt="" crossOrigin='anonymous' onLoad={handleImageLoad}/>
 
                         <div className="now-playing__side">
                             <div className="now-playing__name">{current_track.name}</div>
